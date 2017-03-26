@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <string name="app_name">sensorServDB</string>
+    <string name="hello">Accessing Servlet from Android</string>
+    <string name="button">Invoke Servlet</string>
+</resources>
