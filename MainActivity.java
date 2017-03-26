@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             textZgyro.setText((int) zG + " rad/s");
 
             if (Math.abs(xG) + Math.abs(yG) + Math.abs(zG) > 3) {
-                gyroFlag = true;
+                //gyroFlag = true;
                 //HttpSensor(0);
             }
         }
