@@ -151,8 +151,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             if (flag == 1) {
                 GetXMLTask task = new GetXMLTask();
                 task.execute(new String[] {"http://10.0.2.2:8082/hello"});
-                accelFlag = false;
-                gyroFlag = false;
+              //  accelFlag = false;
+              //  gyroFlag = false;
             }
         }
     };
