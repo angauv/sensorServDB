@@ -9,23 +9,24 @@ package com.example.a00839270.sensorservdb;
         import android.os.AsyncTask;
         import android.support.v7.app.AppCompatActivity;
         import android.os.Bundle;
+        import android.view.View;
+        import android.view.View.OnClickListener;
         import android.widget.TextView;
+        import android.widget.Button;
 
         import java.io.BufferedReader;
         import java.io.IOException;
+        import java.io.InputStream;
         import java.io.InputStreamReader;
-        import java.io.PrintWriter;
         import java.net.HttpURLConnection;
         import java.net.URL;
-        import java.sql.Connection;
-        import java.sql.DriverManager;
-        import java.sql.SQLException;
-        import java.sql.Statement;
+        import java.net.URLConnection;
         import java.text.DecimalFormat;
 
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    TextView textView;
+public class MainActivity extends AppCompatActivity implements OnClickListener {
+    TextView outputText;
+    Button button;
     private TextView textXaccel;
     private TextView textYaccel;
     private TextView textZaccel;
@@ -37,8 +38,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager mSensorManager;
     private Sensor acceleration;
     private Sensor gyro;
-    private SensorEventListener mSensorListener;
-    public static final String URL = "http://10.2.2:8080/midp/hits";
+    public static final String URL = "http://10.0.2.2:8082/hello";
     private float xG;
     private float yG;
     private float zG;
@@ -63,6 +63,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         accelFlag = false;
         gyroFlag = false;
 
+        button = (Button) findViewById(R.id.button);
+        button.setOnClickListener(this);
+
+        outputText = (TextView) findViewById(R.id.outputTxt);
         textXaccel = (TextView) findViewById(R.id.TextViewXaccel);
         textYaccel = (TextView) findViewById(R.id.TextViewYaccel);
         textZaccel = (TextView) findViewById(R.id.TextViewZaccel);
@@ -78,95 +82,125 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.registerListener(mSensorListener, acceleration, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            getGyro(event);
-        } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            getAccelerometer(event);
+    public void onClick(View v) {
+        GetXMLTask task = new GetXMLTask();
+        task.execute(new String[] {"http://10.0.2.2:8082/hello"});
+    }
+
+    public final SensorEventListener mSensorListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+                getGyro(event);
+            } else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                getAccelerometer(event);
+            }
         }
-    }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-
-    private void getGyro(SensorEvent event) {
-        xG = event.values[0];
-        yG = event.values[1];
-        zG = event.values[2];
-
-        textXgyro.setText((int) xG + " rad/s");
-        textYgyro.setText((int) yG + " rad/s");
-        textZgyro.setText((int) zG + " rad/s");
-
-       /* if (Math.abs(xG)+Math.abs(yG)+Math.abs(zG) > 3){
-            gyroFlag = true;
-            HttpSensor(1);
-        }*/
-    }
-
-    private void getAccelerometer(SensorEvent event) {
-        xA = event.values[0];
-        yA = event.values[1];
-        zA = event.values[2];
-
-        DecimalFormat dF = new DecimalFormat("#.##");
-        xA = Float.parseFloat(dF.format(xA));
-        yA = Float.parseFloat(dF.format(yA));
-        zA = Float.parseFloat(dF.format(zA));
-
-        textXaccel.setText(String.valueOf(xA) + " m/s2");
-        textYaccel.setText(String.valueOf(yA) + " m/s2");
-        textZaccel.setText(String.valueOf(zA) + " m/s2");
-
-        /*if (Math.abs(xA)+Math.abs(yA)+Math.abs(zA) > 12){
-            accelFlag = true;
-            HttpSensor(1);
-        }*/
-    }
-
-    protected void onResume() {
-        super.onResume();
-        mSensorManager.registerListener(this, acceleration, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_NORMAL);
-    }
-
-    protected void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-    }
-
-    public void HttpSensor(int flag) {
-        if (accelFlag && gyroFlag){
-            HttpTask task = new HttpTask();
-            task.execute(new String[] {URL});
-            accelFlag = false;
-            gyroFlag = false;
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
-    }
 
-    private class HttpTask extends AsyncTask<String, Void, String> {
+        private void getGyro(SensorEvent event) {
+            xG = event.values[0];
+            yG = event.values[1];
+            zG = event.values[2];
+
+            textXgyro.setText((int) xG + " rad/s");
+            textYgyro.setText((int) yG + " rad/s");
+            textZgyro.setText((int) zG + " rad/s");
+
+            if (Math.abs(xG) + Math.abs(yG) + Math.abs(zG) > 3) {
+                gyroFlag = true;
+                //HttpSensor(0);
+            }
+        }
+
+        private void getAccelerometer(SensorEvent event) {
+            xA = event.values[0];
+            yA = event.values[1];
+            zA = event.values[2];
+
+            DecimalFormat dF = new DecimalFormat("#.##");
+            xA = Float.parseFloat(dF.format(xA));
+            yA = Float.parseFloat(dF.format(yA));
+            zA = Float.parseFloat(dF.format(zA));
+
+            textXaccel.setText(String.valueOf(xA) + " m/s2");
+            textYaccel.setText(String.valueOf(yA) + " m/s2");
+            textZaccel.setText(String.valueOf(zA) + " m/s2");
+
+            //if (Math.abs(xA)+Math.abs(yA)+Math.abs(zA) > 9){
+            //  accelFlag = true;
+            //HttpSensor(1);
+            //}
+        }
+
+        protected void onResume() {
+            MainActivity.super.onResume();
+            mSensorManager.registerListener(this, acceleration, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+        protected void onPause() {
+            MainActivity.super.onPause();
+            mSensorManager.unregisterListener(this);
+        }
+
+        public void HttpSensor(int flag) {
+            if (flag == 1) {
+                GetXMLTask task = new GetXMLTask();
+                task.execute(new String[] {"http://10.0.2.2:8082/hello"});
+                accelFlag = false;
+                gyroFlag = false;
+            }
+        }
+    };
+
+    public class GetXMLTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
             String response = null;
-            BufferedReader br = null;
-            try {
-                URL url = new URL(urls[0]);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                String str = "";
-                while ((str = br.readLine()) != null) {
-                    response = response + str;
-                }
-                br.close();
-            } catch (Exception e) {
-                e.printStackTrace();
+            for (String url : urls) {
+                response = getOutputFromUrl(url);
             }
             return response;
         }
 
+        private String getOutputFromUrl(String url) {
+            StringBuffer output = new StringBuffer("");
+            try {
+                InputStream stream = getHttpConnection(url);
+                BufferedReader buffer = new BufferedReader(new InputStreamReader(stream));
+                String s = "";
+                while ((s = buffer.readLine()) != null)
+                    output.append(s);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            return output.toString();
+        }
+
+        private InputStream getHttpConnection(String urlString) throws IOException {
+            InputStream stream = null;
+            URL url = new URL(urlString);
+            URLConnection connection = url.openConnection();
+            try {
+                HttpURLConnection httpConnection = (HttpURLConnection) connection;
+                httpConnection.setRequestMethod("GET");
+                httpConnection.connect();
+                if (httpConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    stream = httpConnection.getInputStream();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            return stream;
+        }
+
         @Override
-        protected void onPostExecute(String result) {
-            textView.setText(result);
+        protected void onPostExecute(String out) {
+            outputText.setText(out);
         }
     }
 }
